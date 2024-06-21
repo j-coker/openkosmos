@@ -42,6 +42,9 @@ namespace Kosmos.Prototype.OrbitalPhysics
         [JsonProperty("orbit")]
         public OrbitData Orbit { get; set; }
         
+        [JsonProperty("points_of_interest")]
+        public PointOfInterestData[] PointsOfInterest { get; set; }
+        
         [JsonIgnore]
         public CelestialBodyData BodyData { get; set; }
 
@@ -98,5 +101,20 @@ namespace Kosmos.Prototype.OrbitalPhysics
         
         [JsonProperty("rotation_at_epoch_deg")]
         public double RotationAtEpochDeg { get; set; }
+    }
+    
+    public class PointOfInterestData
+    {
+        [JsonProperty("type")]
+        public string Type { get; set; }
+        
+        [JsonProperty("name")]
+        public string Name { get; set; }
+        
+        [JsonProperty("latitude_deg")]
+        public double LatitudeDeg { get; set; }
+        
+        [JsonProperty("longitude_deg")]
+        public double LongitudeDeg { get; set; }
     }
 }

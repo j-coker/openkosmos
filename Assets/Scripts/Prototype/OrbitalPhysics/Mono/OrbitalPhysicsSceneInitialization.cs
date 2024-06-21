@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using Kosmos.FloatingOrigin;
 using Kosmos.Time;
+using Prototype.OrbitalPhysics.Authoring;
+using Unity.Collections;
 using Unity.Entities;
 using Unity.Entities.Graphics;
 using Unity.Mathematics;
@@ -17,6 +19,7 @@ namespace Kosmos.Prototype.OrbitalPhysics
     {
         [SerializeField] private Mesh _sphereMesh;
         [SerializeField] private Material _sphereMaterial;
+        [SerializeField] private Material _earthMaterial;
         
         private Dictionary<StarSystemFileBodyEntry, Entity> _orbitalEntities = 
             new Dictionary<StarSystemFileBodyEntry, Entity>();
@@ -26,6 +29,9 @@ namespace Kosmos.Prototype.OrbitalPhysics
         
         private async void Start()
         {
+            await Awaitable.NextFrameAsync();
+            await Awaitable.NextFrameAsync();
+            
             CreateTime();
             
             var starData = await DeserializeStarFile();
@@ -57,8 +63,17 @@ namespace Kosmos.Prototype.OrbitalPhysics
                 
                 // Create new material with specified color
                 ColorUtility.TryParseHtmlString(body.BodyData.ColorCode, out var color);
-                var mat = new Material(_sphereMaterial);
-                mat.color = color;
+                Material mat;
+                if (body.Id == "proterra")
+                {
+                    mat = new Material(_earthMaterial);
+                }
+                else
+                {
+                    mat = new Material(_sphereMaterial);
+                    mat.color = color;
+                }
+                
                 
                 // Add the body's geometry to the geometry entity
                 OrbitalPhysicsPrototypeUtilities.AddBodyGeometryComponents(
@@ -67,6 +82,8 @@ namespace Kosmos.Prototype.OrbitalPhysics
                     _sphereMesh, 
                     mat, 
                     body.BodyData.EquatorialRadiusM);
+
+                HandlePointsOfInterest(body);
             }
             
             ResolveBodyUpdateOrder();
@@ -256,6 +273,94 @@ namespace Kosmos.Prototype.OrbitalPhysics
             });
             
             entityManager.AddComponentData(entity, new FloatingPositionData());
+        }
+
+        private void HandlePointsOfInterest(StarSystemFileBodyEntry body)
+        {
+            if (body.PointsOfInterest != null)
+            {
+                var bodyEntity = _orbitalEntities[body];
+                
+                var entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
+                var prefabQuery = entityManager.CreateEntityQuery(typeof(BuildingPrefab));
+                
+                var prefabEntity = prefabQuery.GetSingletonEntity();
+                var buildingPrefab = entityManager.GetComponentData<BuildingPrefab>(prefabEntity).PrefabBuilding;
+                var groundPrefab = entityManager.GetComponentData<BuildingPrefab>(prefabEntity).PrefabGround;
+                
+                var bodyRadius = body.BodyData.EquatorialRadiusM;
+                
+                for (int i = 0; i < body.PointsOfInterest.Length; i++)
+                {
+                    var poi = body.PointsOfInterest[i];
+                    
+                    var lat = math.radians(poi.LatitudeDeg);
+                    var lon = math.radians(poi.LongitudeDeg);
+                    
+                    var x = bodyRadius * math.cos(lat) * math.cos(lon);
+                    var y = bodyRadius * math.cos(lat) * math.sin(lon);
+                    var z = bodyRadius * math.sin(lat);
+                    
+                    var pos = new double3(x, y, z);
+                    var posF = new float3(pos);
+                    
+                    // The poi's local up vector should point away from the body's center
+                    // Take cross product of position vector and the body's local up vector
+                    var away = math.cross(pos, new double3(0, 1, 0));
+                    var awayF = new float3(away);
+                    
+                    var awayRotation = quaternion.LookRotationSafe(awayF, posF);
+                    
+                    var poiEntity = entityManager.CreateEntity();
+
+                    entityManager.AddComponentData(poiEntity, new LocalToWorld());
+                    entityManager.AddComponentData(poiEntity, new LocalTransform()
+                    {
+                        Scale = 1f
+                    });
+                    entityManager.AddComponentData(poiEntity, new FloatingPositionData());
+                    entityManager.AddComponentData(poiEntity, new FloatingPositionParent()
+                    {
+                        ParentEntity = bodyEntity,
+                        LocalPosition = pos,
+                        LocalRotation = awayRotation
+                    });
+                    entityManager.AddComponentData(poiEntity, new BodyId()
+                    {
+                        Value = poi.Name
+                    });
+                    entityManager.AddComponentData(poiEntity, new FloatingScaleData()
+                    {
+                        Value = 1.0
+                    });
+                    
+                    // Instantiate prefabs for poi
+                    var groundEntity = entityManager.Instantiate(groundPrefab);
+                    entityManager.AddComponentData(groundEntity, new Parent()
+                    {
+                        Value = poiEntity
+                    });
+                    
+                    for (int cityX = -3; cityX < 4; cityX++)
+                    {
+                        for (int cityZ = -3; cityZ < 4; cityZ++)
+                        {
+                            var buildingEntity = entityManager.Instantiate(buildingPrefab);
+                            entityManager.AddComponentData(buildingEntity, new Parent()
+                            {
+                                Value = poiEntity
+                            });
+                            entityManager.AddComponentData(buildingEntity, new LocalTransform()
+                            {
+                                Position = new float3(cityX * 75f, 
+                                    0, 
+                                    cityZ * 75f),
+                                Scale = 1f
+                            });
+                        }
+                    }
+                }
+            }
         }
     }
 }

@@ -293,6 +293,21 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5277665545431930872, guid: 56fa9685411de6440a51fa56f7f80f27,
         type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 5277665545431930872, guid: 56fa9685411de6440a51fa56f7f80f27,
+        type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 5277665545431930872, guid: 56fa9685411de6440a51fa56f7f80f27,
+        type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 5277665545431930872, guid: 56fa9685411de6440a51fa56f7f80f27,
+        type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}
@@ -340,6 +355,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5277665545431930872, guid: 56fa9685411de6440a51fa56f7f80f27,
+        type: 3}
+      propertyPath: m_ConstrainProportionsScale
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5614238244908642735, guid: 56fa9685411de6440a51fa56f7f80f27,
         type: 3}
@@ -601,6 +621,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _prefab: {fileID: 851469188651048676, guid: 16dc51a20ef8d38498351e710f3f6467, type: 3}
+  _groundPrefab: {fileID: 5700220649531838695, guid: 5adb9e43dbe606c4d876b7f00d10146a,
+    type: 3}
+  _physicsSpherePrefab: {fileID: 3542746795500976085, guid: 9a2b963eb59af4e478e554ec413c0ade,
+    type: 3}
 --- !u!4 &1728126342
 Transform:
   m_ObjectHideFlags: 0

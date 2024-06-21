@@ -48,11 +48,11 @@ namespace Kosmos.FloatingOrigin
             // Get distance from floating origin
             var distance = FloatingOriginMath.VectorFromFloatingOrigin(FloatingOrigin, floatingPosition);
             
-            // If distance is greater than threshold, deactivate physics
+            // If distance is greater than threshold, deactivate physics //
             if (math.length(distance) > 20000f)
             {
                 physicsMassOverride.IsKinematic = 1;
-                physicsMassOverride.SetVelocityToZero = 1;
+                physicsMassOverride.SetVelocityToZero = 1; 
             }
             else
             {

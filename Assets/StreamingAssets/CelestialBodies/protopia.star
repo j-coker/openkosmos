@@ -36,7 +36,15 @@
         "period_sec": 0,
         "obliquity_deg": 0,
         "rotation_at_epoch_deg": 0
-      }
+      },
+      "points_of_interest": [
+        {
+            "type": "city",
+            "name": "protopolis",
+            "latitude_deg": 33.7,
+            "longitude_deg": 92.1
+        }
+      ]
     },
     {
       "type": "planet",

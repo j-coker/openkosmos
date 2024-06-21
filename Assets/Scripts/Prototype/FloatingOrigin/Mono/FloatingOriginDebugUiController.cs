@@ -26,6 +26,7 @@ namespace Prototype.FloatingOrigin.Mono
         private Button _affixButton;
         private Button _unaffixButton;
         private Button _spawnSphereButton;
+        private Button _teleportButton;
 
         private NativeArray<Entity> _bodyEntities;
         private Label[] _namePlates;
@@ -42,10 +43,12 @@ namespace Prototype.FloatingOrigin.Mono
             _affixButton = _uiDocument.rootVisualElement.Q<Button>("btn_affix");
             _unaffixButton = _uiDocument.rootVisualElement.Q<Button>("btn_unaffix");
             _spawnSphereButton = _uiDocument.rootVisualElement.Q<Button>("btn_spawnsphere");
+            _teleportButton = _uiDocument.rootVisualElement.Q<Button>("btn_teleport");
             
             _affixButton.clicked += OnAffixClicked;
             _unaffixButton.clicked += OnUnaffixClicked;
             _spawnSphereButton.clicked += OnSpawnSphereClicked;
+            _teleportButton.clicked += OnTeleportClicked;
             
             _entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
             _entity = _entityManager.CreateEntity();
@@ -57,6 +60,7 @@ namespace Prototype.FloatingOrigin.Mono
             _affixButton.clicked -= OnAffixClicked;
             _unaffixButton.clicked -= OnUnaffixClicked;
             _spawnSphereButton.clicked -= OnSpawnSphereClicked;
+            _teleportButton.clicked -= OnTeleportClicked;
         }
 
         private void Initialize()
@@ -268,7 +272,7 @@ namespace Prototype.FloatingOrigin.Mono
             }
             
             var prefabSpawner = prefabQuery.GetSingletonEntity();
-            var prefabEntity = _entityManager.GetComponentData<BuildingPrefab>(prefabSpawner).Prefab;
+            var prefabEntity = _entityManager.GetComponentData<BuildingPrefab>(prefabSpawner).PhysicsSpherePrefab;
             
             var focusEntity = currentFocusQuery.GetSingletonEntity();
             var focusFloatingPosition = _entityManager.GetComponentData<FloatingPositionData>(focusEntity);
@@ -289,24 +293,65 @@ namespace Prototype.FloatingOrigin.Mono
             proterraQueryArray.Dispose();
             
             var prefabInstance = _entityManager.Instantiate(prefabEntity);
+        }
+
+        private void OnTeleportClicked()
+        {
+            var floatingFocusQuery = _entityManager.CreateEntityQuery(typeof(FloatingFocusTag));
+            var count = floatingFocusQuery.CalculateEntityCount();
             
-            _entityManager.SetComponentData(prefabInstance, new LocalTransform()
+            if (count == 0)
             {
-                Scale = 1
-            });
+                return;
+            }
             
-            var floatingScale = new FloatingScaleData()
+            var protopiaQuery = _entityManager.CreateEntityQuery(typeof(BodyId));
+            var protopiaCount = protopiaQuery.CalculateEntityCount();
+            
+            if (protopiaCount == 0)
             {
-                Value = 1f
-            };
+                return;
+            }
             
-            _entityManager.AddComponentData(prefabInstance, floatingScale);
+            var floatingOriginQuery = _entityManager.CreateEntityQuery(typeof(FloatingOriginData));
+            var floatingOriginCount = floatingOriginQuery.CalculateEntityCount();
             
-            _entityManager.AddComponentData(prefabInstance, focusFloatingPosition);
-            _entityManager.AddComponentData(prefabInstance, new FloatingFocusParent()
+            if (floatingOriginCount == 0)
             {
-                ParentEntity = proterraEntity
-            });
+                return;
+            }
+            
+            var floatingOriginEntity = floatingOriginQuery.GetSingletonEntity();
+            var floatingOriginData = _entityManager.GetComponentData<FloatingOriginData>(floatingOriginEntity);
+            
+            var protopolisEntity = Entity.Null;
+            var protopolisQueryArray = protopiaQuery.ToEntityArray(Allocator.Temp);
+            
+            foreach (var entity in protopolisQueryArray)
+            {
+                var bodyId = _entityManager.GetComponentData<BodyId>(entity).Value;
+                if (bodyId == "protopolis")
+                {
+                    protopolisEntity = entity;
+                    break;
+                }
+            }
+            
+            protopolisQueryArray.Dispose();
+            
+            if (protopolisEntity == Entity.Null)
+            {
+                return;
+            }
+            
+            var focusEntity = floatingFocusQuery.GetSingletonEntity();
+            var protopolisFloatingPosition = _entityManager.GetComponentData<FloatingPositionData>(protopolisEntity);
+            
+            _entityManager.SetComponentData(focusEntity, protopolisFloatingPosition);
+
+            floatingOriginData.Scale = 1.0;
+            
+            _entityManager.SetComponentData(floatingOriginEntity, floatingOriginData);
         }
     }
 }
